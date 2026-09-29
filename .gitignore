@@ -1,32 +1,24 @@
-# Terraform
+# Terraform files
 *.tfstate
 *.tfstate.*
-*.tfvars
-*.tfvars.secrets
-*.tfplan
+*.tfvars.backup
 .terraform/
 .terraform.lock.hcl
 crash.log
 crash.*.log
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
 
-# Exception: Garder le state du bootstrap (chicken and egg problem)
-!bootstrap/terraform.tfstate
-!bootstrap/terraform.tfstate.backup
+# Terraform plan files
+tfplan
+*.tfplan
 
-# Secrets
-*.pem
-*.key
-secrets/
-.env
-.env.*
-
-# Lambda packages
-*.zip
-modules/lambda/functions/**/*.zip
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
 
 # IDE
 .idea/
@@ -41,7 +33,3 @@ Thumbs.db
 
 # Logs
 *.log
-
-# Backup files
-*.backup
-*.bak
