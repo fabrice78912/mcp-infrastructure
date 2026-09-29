@@ -5,7 +5,7 @@
 *.tfvars.backup
 !*.tfvars.example
 .terraform/
-.terraform.lock.hcl
+# .terraform.lock.hcl should be committed to version control
 crash.log
 crash.*.log
 
