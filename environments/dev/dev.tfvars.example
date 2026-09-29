@@ -1,0 +1,37 @@
+# Terraform variables for DEV environment
+# Copy this file to dev.tfvars and fill in your actual values
+# dev.tfvars is git-ignored and will never be committed
+
+# AWS Configuration
+aws_region   = "ca-central-1"
+environment  = "dev"
+project_name = "mcp"
+
+# Lambda Configuration
+code_version       = "1.0.0"
+lambda_memory_size = 512
+lambda_timeout     = 300
+
+# IBM MQ Configuration
+# For production, use AWS Secrets Manager instead of hardcoding
+ibm_mq_host     = "your-mq-host.example.com"
+ibm_mq_port     = 1414
+ibm_mq_channel  = "DEV.APP.SVRCONN"
+ibm_mq_password = "your-password-here"
+
+# MDMAE API
+mdmae_url = "https://mdmae-api-dev.example.com"
+
+# CloudWatch
+cloudwatch_retention_days = 7
+enable_cloudwatch_alarms  = false
+
+# DynamoDB
+enable_dynamodb_backup = false
+
+# API Gateway
+api_throttle_rate_limit  = 1000
+api_throttle_burst_limit = 2000
+
+# MSK/Kafka
+msk_partitions = 3

@@ -1,7 +1,9 @@
 # Terraform files
 *.tfstate
 *.tfstate.*
+*.tfvars
 *.tfvars.backup
+!*.tfvars.example
 .terraform/
 .terraform.lock.hcl
 crash.log
@@ -33,3 +35,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Environment variables
+.env.local
+
+# Build artifacts
+*.zip
+*.jar

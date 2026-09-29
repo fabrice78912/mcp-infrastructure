@@ -10,6 +10,8 @@ Guide de démarrage rapide pour gérer l'infrastructure MCP.
 - 🛠️ [Documentation des Scripts](scripts/README.md)
 - 🏗️ [Architecture](docs/ARCHITECTURE.md)
 - 📚 [Guide Swagger UI](docs/SWAGGER-UI-GUIDE.md) - Documentation interactive de l'API
+- 🔄 [Workflow de Mise à Jour](docs/BIRTHDATE-UPDATE-WORKFLOW.md) - Définition détaillée du workflow (exemple: date de naissance)
+- ➕ [Guide d'Ajout de Nouveau Endpoint](docs/ADD-NEW-ENDPOINT-GUIDE.md) - Implémentation complète d'un nouvel endpoint
 
 ---
 
@@ -222,8 +224,11 @@ mcp-infrastructure/
 │   ├── upload-lambda-jars.sh    # Upload JARs vers S3
 │   └── README.md                # Documentation des scripts
 ├── docs/
-│   ├── DESTROY-RECREATE-GUIDE.md  # Guide détaillé destroy/recreate
-│   └── ARCHITECTURE.md             # Documentation architecture
+│   ├── DESTROY-RECREATE-GUIDE.md        # Guide détaillé destroy/recreate
+│   ├── ARCHITECTURE.md                  # Documentation architecture
+│   ├── SWAGGER-UI-GUIDE.md              # Guide Swagger UI interactif
+│   ├── BIRTHDATE-UPDATE-WORKFLOW.md     # Workflow de mise à jour détaillé
+│   └── ADD-NEW-ENDPOINT-GUIDE.md        # Guide d'ajout de nouveaux endpoints
 └── .github/
     └── workflows/
         └── terraform-deploy.yml   # Workflow GitHub Actions
@@ -318,6 +323,8 @@ Avant de considérer l'infrastructure opérationnelle:
 
 - 📖 [Guide Détaillé](docs/DESTROY-RECREATE-GUIDE.md) pour plus d'informations
 - 🛠️ [Documentation Scripts](scripts/README.md) pour les scripts
+- 🔄 [Workflow de Mise à Jour](docs/BIRTHDATE-UPDATE-WORKFLOW.md) pour comprendre les workflows
+- ➕ [Guide d'Ajout d'Endpoint](docs/ADD-NEW-ENDPOINT-GUIDE.md) pour ajouter de nouveaux endpoints
 - 💬 Contacter l'équipe DevOps en cas de problème
 
 ---
