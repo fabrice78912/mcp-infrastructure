@@ -1,5 +1,12 @@
 # Configuration Swagger UI pour l'API Gateway
 
+# Génération automatique du package ZIP pour la Lambda Swagger UI
+data "archive_file" "swagger_ui_lambda" {
+  type        = "zip"
+  source_dir  = "${path.module}/swagger-ui-lambda"
+  output_path = "${path.module}/swagger-ui-lambda.zip"
+}
+
 # Lambda function pour servir Swagger UI
 resource "aws_lambda_function" "swagger_ui" {
   function_name = "${var.environment}-${var.project_name}-swagger-ui"
@@ -8,8 +15,8 @@ resource "aws_lambda_function" "swagger_ui" {
   runtime       = "python3.11"
   timeout       = 10
 
-  filename         = "${path.module}/swagger-ui-lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/swagger-ui-lambda.zip")
+  filename         = data.archive_file.swagger_ui_lambda.output_path
+  source_code_hash = data.archive_file.swagger_ui_lambda.output_base64sha256
 
   environment {
     variables = {
