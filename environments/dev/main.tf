@@ -5,13 +5,10 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-# Remote state from bootstrap
-data "terraform_remote_state" "bootstrap" {
-  backend = "local"
-
-  config = {
-    path = "../../bootstrap/terraform.tfstate"
-  }
+# Data source for Lambda artifacts bucket (created by bootstrap)
+# Using data source instead of remote state for GitHub Actions compatibility
+data "aws_s3_bucket" "lambda_artifacts" {
+  bucket = "bnc-mcp-lambda-artifacts"
 }
 
 # ========================================
@@ -201,7 +198,7 @@ module "lambda" {
   lambda_execution_role_arn = module.iam.lambda_execution_role_arn
 
   # Lambda code bucket
-  lambda_code_bucket = data.terraform_remote_state.bootstrap.outputs.lambda_artifacts_bucket_name
+  lambda_code_bucket = data.aws_s3_bucket.lambda_artifacts.bucket
   code_version       = var.code_version
 
   # DynamoDB table names
