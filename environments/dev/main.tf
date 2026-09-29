@@ -414,6 +414,9 @@ module "api_gateway" {
   # Step Functions
   state_machine_arn = module.step_functions.state_machine_arns["client_name_update"]
 
+  # Lambda execution role (for Swagger UI Lambda)
+  lambda_execution_role_arn = module.iam.lambda_execution_role_arn
+
   # Phone Update workflow Lambda functions (optional - leave empty for now)
   phone_update_controller_invoke_arn = ""
   phone_update_controller_arn        = ""

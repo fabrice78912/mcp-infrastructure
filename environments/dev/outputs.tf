@@ -8,6 +8,16 @@ output "api_gateway_id" {
   value       = module.api_gateway.api_id
 }
 
+output "swagger_ui_url" {
+  description = "Swagger UI documentation URL"
+  value       = module.api_gateway.swagger_ui_url
+}
+
+output "openapi_spec_url" {
+  description = "OpenAPI specification URL"
+  value       = module.api_gateway.openapi_spec_url
+}
+
 output "dynamodb_table_name" {
   description = "DynamoDB table name"
   value       = module.dynamodb.table_name

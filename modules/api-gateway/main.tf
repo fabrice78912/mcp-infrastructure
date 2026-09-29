@@ -69,7 +69,7 @@ resource "aws_api_gateway_integration" "stepfunctions" {
     "application/json" = <<EOF
 {
   "stateMachineArn": "${var.state_machine_arn}",
-  "input": "{\"clientId\": \"$input.params('clientId')\", \"newLastName\": $input.json('$.newLastName'), \"reason\": $input.json('$.reason')}"
+  "input": "{\"clientId\": \"$util.escapeJavaScript($input.params('clientId'))\", \"newLastName\": \"$util.escapeJavaScript($input.path('$.newLastName'))\", \"reason\": \"$util.escapeJavaScript($input.path('$.reason'))\"}"
 }
 EOF
   }
@@ -115,7 +115,9 @@ resource "aws_api_gateway_deployment" "main" {
   depends_on = [
     aws_api_gateway_integration.stepfunctions,
     aws_api_gateway_integration_response.stepfunctions,
-    aws_api_gateway_method_response.put_nom_200
+    aws_api_gateway_method_response.put_nom_200,
+    aws_api_gateway_integration.get_docs,
+    aws_api_gateway_integration_response.get_swagger_json
   ]
 
   lifecycle {

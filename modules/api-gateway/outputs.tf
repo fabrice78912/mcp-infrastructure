@@ -22,3 +22,13 @@ output "deployment_id" {
   description = "ID of the API Gateway deployment"
   value       = aws_api_gateway_deployment.main.id
 }
+
+output "swagger_ui_url" {
+  description = "URL of the Swagger UI documentation"
+  value       = "${aws_api_gateway_stage.main.invoke_url}/docs"
+}
+
+output "openapi_spec_url" {
+  description = "URL of the OpenAPI specification (swagger.json)"
+  value       = "${aws_api_gateway_stage.main.invoke_url}/swagger.json"
+}

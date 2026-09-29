@@ -69,3 +69,8 @@ variable "api_version" {
   type        = string
   default     = "1.0.0"
 }
+
+variable "lambda_execution_role_arn" {
+  description = "ARN of IAM role for Lambda execution (used by Swagger UI Lambda)"
+  type        = string
+}
