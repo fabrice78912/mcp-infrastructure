@@ -62,14 +62,14 @@ resource "aws_api_gateway_integration" "stepfunctions" {
 
   integration_http_method = "POST"
   type                    = "AWS"
-  uri                     = "arn:aws:apigateway:${data.aws_region.current.name}:states:action/StartSyncExecution"
+  uri                     = "arn:aws:apigateway:${data.aws_region.current.name}:states:action/StartExecution"
   credentials             = aws_iam_role.api_stepfunctions.arn
 
   request_templates = {
     "application/json" = <<EOF
 {
   "stateMachineArn": "${var.state_machine_arn}",
-  "input": "{\"clientId\": \"$input.params('clientId')\", \"newName\": $input.json('$.newName')}"
+  "input": "{\"clientId\": \"$input.params('clientId')\", \"newLastName\": $input.json('$.newLastName'), \"reason\": $input.json('$.reason')}"
 }
 EOF
   }
@@ -224,6 +224,7 @@ resource "aws_iam_role_policy" "api_stepfunctions" {
       {
         Effect = "Allow"
         Action = [
+          "states:StartExecution",
           "states:StartSyncExecution"
         ]
         Resource = var.state_machine_arn
