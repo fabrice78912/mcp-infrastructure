@@ -77,12 +77,32 @@ resource "aws_security_group" "lambda" {
   }
 }
 
-# VPC Endpoints (optional, for better performance and security)
+# Route table for private subnets
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name        = "${var.environment}-${var.project_name}-private-rt"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  count = length(var.private_subnet_cidrs)
+
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
+# VPC Endpoints (Gateway endpoints for S3 and DynamoDB)
 resource "aws_vpc_endpoint" "s3" {
   count = var.enable_vpc_endpoints ? 1 : 0
 
-  vpc_id       = aws_vpc.main.id
-  service_name = "com.amazonaws.${data.aws_region.current.name}.s3"
+  vpc_id          = aws_vpc.main.id
+  service_name    = "com.amazonaws.${data.aws_region.current.name}.s3"
+  route_table_ids = [aws_route_table.private.id]
 
   tags = {
     Name        = "${var.environment}-${var.project_name}-s3-endpoint"
@@ -95,11 +115,63 @@ resource "aws_vpc_endpoint" "s3" {
 resource "aws_vpc_endpoint" "dynamodb" {
   count = var.enable_vpc_endpoints ? 1 : 0
 
-  vpc_id       = aws_vpc.main.id
-  service_name = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
+  vpc_id          = aws_vpc.main.id
+  service_name    = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
+  route_table_ids = [aws_route_table.private.id]
 
   tags = {
     Name        = "${var.environment}-${var.project_name}-dynamodb-endpoint"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+  }
+}
+
+# VPC Endpoint for Step Functions (Interface endpoint)
+resource "aws_vpc_endpoint" "stepfunctions" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.states"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.0.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name        = "${var.environment}-${var.project_name}-stepfunctions-endpoint"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+  }
+}
+
+# Security group for VPC endpoints (interface type)
+resource "aws_security_group" "vpc_endpoints" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
+  name        = "${var.environment}-${var.project_name}-vpc-endpoints-sg"
+  description = "Security group for VPC interface endpoints"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Allow HTTPS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.environment}-${var.project_name}-vpc-endpoints-sg"
     Environment = var.environment
     Project     = var.project_name
     ManagedBy   = "Terraform"

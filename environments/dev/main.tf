@@ -129,6 +129,9 @@ module "vpc" {
 
   availability_zones = ["${var.aws_region}a", "${var.aws_region}b"]
   private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+
+  # Enable VPC endpoints for DynamoDB, S3, and Step Functions
+  enable_vpc_endpoints = true
 }
 
 # ========================================
