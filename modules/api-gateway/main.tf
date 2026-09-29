@@ -113,7 +113,9 @@ resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
 
   depends_on = [
-    aws_api_gateway_integration.stepfunctions
+    aws_api_gateway_integration.stepfunctions,
+    aws_api_gateway_integration_response.stepfunctions,
+    aws_api_gateway_method_response.put_nom_200
   ]
 
   lifecycle {
@@ -125,6 +127,7 @@ resource "aws_api_gateway_deployment" "main" {
       aws_api_gateway_resource.nom.id,
       aws_api_gateway_method.put_nom.id,
       aws_api_gateway_integration.stepfunctions.id,
+      aws_api_gateway_integration_response.stepfunctions.id,
     ]))
   }
 }
