@@ -1,0 +1,356 @@
+openapi: 3.0.3
+info:
+  title: MCP Phone Update API
+  description: |
+    API de mise à jour des numéros de téléphone clients pour le Master Client Profile (MCP).
+
+    Cette API démarre un workflow asynchrone de mise à jour qui inclut :
+    - Validation du numéro de téléphone
+    - Vérification de l'historique de changements
+    - Détection de fraude
+    - Envoi d'OTP par SMS
+    - Approbation humaine si nécessaire
+    - Mise à jour des systèmes MDMAE, FCC, CRM
+
+    **Note :** Cette API démarre un workflow asynchrone et retourne immédiatement.
+    Utilisez l'endpoint `/status/{executionArn}` pour suivre l'avancement.
+  version: 1.0.0
+  contact:
+    name: Équipe MCP
+    email: mcp-team@bnc.ca
+
+servers:
+  - url: https://{apiId}.execute-api.ca-central-1.amazonaws.com/{stage}
+    description: API Gateway Endpoint
+    variables:
+      apiId:
+        default: xxxxx
+        description: API Gateway ID
+      stage:
+        default: dev
+        description: Environment (dev, qa, prod)
+
+tags:
+  - name: Phone Update
+    description: Opérations de mise à jour de téléphone
+  - name: Status
+    description: Vérification du statut d'exécution
+
+paths:
+  /api/clients/{clientId}/phone:
+    put:
+      tags:
+        - Phone Update
+      summary: Mettre à jour le numéro de téléphone d'un client
+      description: |
+        Démarre un workflow asynchrone de mise à jour du numéro de téléphone.
+
+        **Workflow inclut :**
+        1. Lecture du profil client
+        2. Validation du format du téléphone (E.164)
+        3. Vérification de l'historique de changements (90 jours)
+        4. Détection de fraude (> 3 changements)
+        5. Approbation humaine si suspect
+        6. Envoi d'un code OTP par SMS
+        7. Attente de validation OTP (60 secondes)
+        8. Mise à jour MDMAE
+        9. Mises à jour parallèles (FCC, CRM, Notifications)
+
+        **Temps d'exécution moyen :** 2-5 minutes
+      operationId: updateClientPhone
+      parameters:
+        - name: clientId
+          in: path
+          description: Identifiant unique du client
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 50
+            pattern: '^[A-Za-z0-9_-]+$'
+          example: "CLIENT-12345"
+      requestBody:
+        description: Détails de mise à jour du téléphone
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhoneUpdateRequest'
+            examples:
+              canada:
+                summary: Numéro canadien
+                value:
+                  phoneNumber: "+15141234567"
+                  country: "CA"
+              usa:
+                summary: Numéro américain
+                value:
+                  phoneNumber: "+12125551234"
+                  country: "US"
+      responses:
+        '200':
+          description: Workflow démarré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhoneUpdateResponse'
+              example:
+                message: "Phone update workflow initiated successfully"
+                executionArn: "arn:aws:states:ca-central-1:123456:execution:dev-mcp-client-phone-update:phone-update-CLIENT-12345-1234567890"
+                timestamp: "2026-09-25T10:30:00Z"
+        '400':
+          description: Requête invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingField:
+                  summary: Champ manquant
+                  value:
+                    error: "phoneNumber and country are required"
+                    timestamp: "2026-09-25T10:30:00Z"
+                invalidFormat:
+                  summary: Format invalide
+                  value:
+                    error: "phoneNumber must be in E.164 format (e.g., +15141234567)"
+                    timestamp: "2026-09-25T10:30:00Z"
+        '500':
+          description: Erreur serveur interne
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Internal server error: Failed to start Step Functions execution"
+                timestamp: "2026-09-25T10:30:00Z"
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        uri: arn:aws:apigateway:ca-central-1:lambda:path/2015-03-31/functions/${phone_update_controller_arn}/invocations
+        passthroughBehavior: when_no_match
+
+  /api/clients/{clientId}/phone/status/{executionId}:
+    get:
+      tags:
+        - Status
+      summary: Vérifier le statut d'une mise à jour de téléphone
+      description: |
+        Récupère le statut actuel d'une exécution de workflow de mise à jour.
+
+        **États possibles :**
+        - `RUNNING` : Workflow en cours
+        - `SUCCEEDED` : Workflow terminé avec succès
+        - `FAILED` : Workflow échoué
+        - `TIMED_OUT` : Workflow timeout
+        - `ABORTED` : Workflow annulé
+      operationId: getPhoneUpdateStatus
+      parameters:
+        - name: clientId
+          in: path
+          description: Identifiant unique du client
+          required: true
+          schema:
+            type: string
+          example: "CLIENT-12345"
+        - name: executionId
+          in: path
+          description: ID de l'exécution Step Functions
+          required: true
+          schema:
+            type: string
+          example: "phone-update-CLIENT-12345-1234567890"
+      responses:
+        '200':
+          description: Statut récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                clientId: "CLIENT-12345"
+                executionId: "phone-update-CLIENT-12345-1234567890"
+                status: "RUNNING"
+                startDate: "2026-09-25T10:30:00Z"
+                currentStep: "WaitForOTP"
+        '404':
+          description: Exécution non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Execution not found"
+                timestamp: "2026-09-25T10:30:00Z"
+        '500':
+          description: Erreur serveur interne
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        uri: arn:aws:apigateway:ca-central-1:lambda:path/2015-03-31/functions/${phone_update_status_checker_arn}/invocations
+        passthroughBehavior: when_no_match
+
+components:
+  schemas:
+    PhoneUpdateRequest:
+      type: object
+      required:
+        - phoneNumber
+        - country
+      properties:
+        phoneNumber:
+          type: string
+          description: |
+            Numéro de téléphone au format E.164 (international).
+
+            Format : +[code pays][numéro]
+            - Doit commencer par '+'
+            - Code pays : 1-3 chiffres
+            - Numéro : 4-14 chiffres
+            - Total max : 15 chiffres (incluant le code pays)
+          minLength: 8
+          maxLength: 16
+          pattern: '^\+[1-9]\d{1,14}$'
+          example: "+15141234567"
+        country:
+          type: string
+          description: Code pays ISO 3166-1 alpha-2 (2 lettres majuscules)
+          minLength: 2
+          maxLength: 2
+          pattern: '^[A-Z]{2}$'
+          example: "CA"
+          enum:
+            - CA
+            - US
+            - FR
+            - UK
+            - DE
+      example:
+        phoneNumber: "+15141234567"
+        country: "CA"
+
+    PhoneUpdateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Message de confirmation
+          example: "Phone update workflow initiated successfully"
+        executionArn:
+          type: string
+          description: ARN complet de l'exécution Step Functions
+          example: "arn:aws:states:ca-central-1:123456:execution:dev-mcp-client-phone-update:phone-update-CLIENT-12345-1234567890"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp ISO 8601 du démarrage
+          example: "2026-09-25T10:30:00Z"
+      required:
+        - message
+        - executionArn
+        - timestamp
+
+    StatusResponse:
+      type: object
+      properties:
+        clientId:
+          type: string
+          description: Identifiant du client
+          example: "CLIENT-12345"
+        executionId:
+          type: string
+          description: ID de l'exécution
+          example: "phone-update-CLIENT-12345-1234567890"
+        status:
+          type: string
+          description: Statut actuel du workflow
+          enum:
+            - RUNNING
+            - SUCCEEDED
+            - FAILED
+            - TIMED_OUT
+            - ABORTED
+          example: "RUNNING"
+        startDate:
+          type: string
+          format: date-time
+          description: Date de démarrage
+          example: "2026-09-25T10:30:00Z"
+        stopDate:
+          type: string
+          format: date-time
+          description: Date de fin (si terminé)
+          example: "2026-09-25T10:35:00Z"
+        currentStep:
+          type: string
+          description: Étape actuelle du workflow
+          example: "WaitForOTP"
+        error:
+          type: string
+          description: Message d'erreur (si échec)
+          example: "OTP validation failed after 3 attempts"
+      required:
+        - clientId
+        - executionId
+        - status
+        - startDate
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Message d'erreur détaillé
+          example: "phoneNumber and country are required"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp de l'erreur
+          example: "2026-09-25T10:30:00Z"
+      required:
+        - error
+        - timestamp
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        Clé API pour l'authentification.
+        Contactez l'équipe MCP pour obtenir une clé.
+
+# Appliquer l'authentification globalement (optionnel)
+# security:
+#   - ApiKeyAuth: []
+
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true
+  params-only:
+    validateRequestBody: false
+    validateRequestParameters: true
+
+x-amazon-apigateway-request-validator: all
+
+# Configuration CORS globale
+x-amazon-apigateway-cors:
+  allowOrigins:
+    - '*'
+  allowMethods:
+    - GET
+    - PUT
+    - OPTIONS
+  allowHeaders:
+    - Content-Type
+    - X-Amz-Date
+    - Authorization
+    - X-Api-Key
+    - X-Amz-Security-Token
+  maxAge: 3600
+  allowCredentials: false

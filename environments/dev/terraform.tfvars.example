@@ -1,0 +1,31 @@
+# Example terraform.tfvars file for dev environment
+# Copy this file to terraform.tfvars and fill in the values
+# DO NOT commit terraform.tfvars to Git!
+
+# AWS Configuration
+aws_region = "ca-central-1"
+
+# Secrets (DO NOT put real values here - use GitHub Secrets instead)
+ibm_mq_host     = "your-ngrok-url.ngrok.io"  # or public IP
+ibm_mq_port     = "1414"
+ibm_mq_channel  = "DEV.APP.SVRCONN"
+ibm_mq_password = "passw0rd"
+mdmae_url       = "http://localhost:8089"
+
+# Lambda Configuration
+lambda_memory_size = 512
+lambda_timeout     = 60
+
+# CloudWatch
+cloudwatch_retention_days = 3
+enable_cloudwatch_alarms  = false
+
+# DynamoDB
+enable_dynamodb_backup = false
+
+# API Gateway
+api_throttle_rate_limit  = 100
+api_throttle_burst_limit = 200
+
+# MSK
+msk_partitions = 1

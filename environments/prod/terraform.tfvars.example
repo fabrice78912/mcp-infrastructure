@@ -1,0 +1,36 @@
+# ========================================
+# IMPORTANT: DO NOT COMMIT THIS FILE WITH REAL VALUES
+# Copy to terraform.tfvars and fill with real values
+# ========================================
+
+aws_region   = "ca-central-1"
+environment  = "prod"
+project_name = "mcp"
+
+# Secrets (should be passed via GitHub Secrets in CI/CD)
+# ibm_mq_host     = "your-ibm-mq-host.example.com"  # Or EC2 instance IP
+# ibm_mq_port     = "1414"
+# ibm_mq_channel  = "PROD.APP.SVRCONN"
+# ibm_mq_password = "your-secure-password"
+# mdmae_url       = "https://mdmae-prod.example.com/api"
+
+# Alarm notifications
+alarm_email = "your-team@example.com"
+
+# Lambda configuration (production settings)
+lambda_memory_size = 1024
+lambda_timeout     = 300
+
+# CloudWatch
+cloudwatch_retention_days = 30
+enable_cloudwatch_alarms  = true
+
+# DynamoDB
+enable_dynamodb_backup = true
+
+# API Gateway throttling (production limits)
+api_throttle_rate_limit  = 200
+api_throttle_burst_limit = 400
+
+# MSK partitions (higher for production)
+msk_partitions = 3
