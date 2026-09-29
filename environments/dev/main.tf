@@ -226,13 +226,16 @@ module "lambda" {
   # Lambda functions to create
   functions = {
     client_profile_reader = {
-      handler     = "com.bnc.mcp.orchestration.handlers.ClientProfileReader::handleRequest"
-      runtime     = "java17"
+      handler     = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
+      runtime     = "java21"
       memory_size = var.lambda_memory_size
       timeout     = var.lambda_timeout
       environment_vars = {
-        DYNAMODB_TABLE = module.dynamodb.table_name
-        LOG_LEVEL      = "INFO"
+        SPRING_PROFILES_ACTIVE           = "lambda"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "validationHandler"
+        DYNAMODB_TABLE                   = module.dynamodb.table_name
+        AWS_REGION                       = var.aws_region
+        LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
         subnet_ids         = module.vpc.private_subnet_ids
@@ -240,12 +243,17 @@ module "lambda" {
       }
     }
     name_validator = {
-      handler     = "com.bnc.mcp.orchestration.handlers.NameValidator::handleRequest"
-      runtime     = "java17"
+      handler     = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
+      runtime     = "java21"
       memory_size = var.lambda_memory_size
       timeout     = var.lambda_timeout
       environment_vars = {
-        LOG_LEVEL = "INFO"
+        SPRING_PROFILES_ACTIVE           = "lambda"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "matchingHandler"
+        MDMAE_API_ENDPOINT               = var.mdmae_url
+        DYNAMODB_TABLE                   = module.dynamodb.table_name
+        AWS_REGION                       = var.aws_region
+        LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
         subnet_ids         = module.vpc.private_subnet_ids
@@ -253,13 +261,17 @@ module "lambda" {
       }
     }
     mdmae_client = {
-      handler     = "com.bnc.mcp.orchestration.handlers.MdmaeClient::handleRequest"
-      runtime     = "java17"
+      handler     = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
+      runtime     = "java21"
       memory_size = var.lambda_memory_size
       timeout     = var.lambda_timeout
       environment_vars = {
-        MDMAE_API_ENDPOINT = var.mdmae_url
-        LOG_LEVEL          = "INFO"
+        SPRING_PROFILES_ACTIVE           = "lambda"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "updateProfileHandler"
+        MDMAE_API_ENDPOINT               = var.mdmae_url
+        DYNAMODB_TABLE                   = module.dynamodb.table_name
+        AWS_REGION                       = var.aws_region
+        LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
         subnet_ids         = module.vpc.private_subnet_ids
@@ -267,13 +279,17 @@ module "lambda" {
       }
     }
     fcc_sender = {
-      handler     = "com.bnc.mcp.orchestration.handlers.FccSender::handleRequest"
-      runtime     = "java17"
+      handler     = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
+      runtime     = "java21"
       memory_size = var.lambda_memory_size
       timeout     = var.lambda_timeout
       environment_vars = {
-        IBM_MQ_SECRET_ARN = module.secrets.secret_arns["ibmmq"]
-        LOG_LEVEL         = "INFO"
+        SPRING_PROFILES_ACTIVE           = "lambda"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "publishEventHandler"
+        IBM_MQ_SECRET_ARN                = module.secrets.secret_arns["ibmmq"]
+        DYNAMODB_TABLE                   = module.dynamodb.table_name
+        AWS_REGION                       = var.aws_region
+        LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
         subnet_ids         = module.vpc.private_subnet_ids
@@ -281,13 +297,17 @@ module "lambda" {
       }
     }
     human_review_handler = {
-      handler     = "com.bnc.mcp.orchestration.handlers.HumanReviewHandler::handleRequest"
-      runtime     = "java17"
+      handler     = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
+      runtime     = "java21"
       memory_size = var.lambda_memory_size
       timeout     = var.lambda_timeout
       environment_vars = {
-        FRAUD_REVIEW_QUEUE_URL = module.sqs.queue_urls["fraud_review"]
-        LOG_LEVEL              = "INFO"
+        SPRING_PROFILES_ACTIVE           = "lambda"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "humanReviewHandler"
+        FRAUD_REVIEW_QUEUE_URL           = module.sqs.queue_urls["fraud_review"]
+        DYNAMODB_TABLE                   = module.dynamodb.table_name
+        AWS_REGION                       = var.aws_region
+        LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
         subnet_ids         = module.vpc.private_subnet_ids
