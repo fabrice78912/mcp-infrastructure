@@ -1,7 +1,9 @@
 # Terraform
 *.tfstate
 *.tfstate.*
+*.tfvars
 *.tfvars.secrets
+*.tfplan
 .terraform/
 .terraform.lock.hcl
 crash.log

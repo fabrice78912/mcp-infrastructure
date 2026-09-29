@@ -338,8 +338,8 @@ module "eventbridge" {
 
   rules = {
     mq_poller = {
-      description         = "Poll IBM MQ every 10 seconds"
-      schedule_expression = "rate(10 seconds)"
+      description         = "Poll IBM MQ every 1 minute"
+      schedule_expression = "rate(1 minute)"
       target_lambda_arn   = module.lambda.function_arns["mq_poller"]
     }
   }
