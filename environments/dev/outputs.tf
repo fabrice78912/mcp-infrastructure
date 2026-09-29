@@ -33,9 +33,9 @@ output "sqs_queue_urls" {
   value       = module.sqs.queue_urls
 }
 
-output "msk_bootstrap_servers" {
-  description = "MSK bootstrap servers"
-  value       = module.msk.bootstrap_servers
+output "msk_bootstrap_brokers" {
+  description = "MSK bootstrap brokers"
+  value       = module.msk.bootstrap_brokers
   sensitive   = true
 }
 

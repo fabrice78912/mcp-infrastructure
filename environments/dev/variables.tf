@@ -16,6 +16,12 @@ variable "project_name" {
   default     = "mcp"
 }
 
+variable "code_version" {
+  description = "Version of Lambda deployment packages"
+  type        = string
+  default     = "1.0.0"
+}
+
 # Secrets (passed from GitHub Actions)
 variable "ibm_mq_host" {
   description = "IBM MQ host"

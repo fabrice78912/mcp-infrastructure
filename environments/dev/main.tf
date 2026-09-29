@@ -5,6 +5,15 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+# Remote state from bootstrap
+data "terraform_remote_state" "bootstrap" {
+  backend = "local"
+
+  config = {
+    path = "../../bootstrap/terraform.tfstate"
+  }
+}
+
 # ========================================
 # Secrets Manager
 # ========================================
@@ -48,6 +57,27 @@ module "dynamodb" {
   enable_encryption              = true
 }
 
+# Phone Update workflow tables
+module "dynamodb_phone_history" {
+  source = "../../modules/dynamodb"
+
+  environment                    = var.environment
+  project_name                   = var.project_name
+  table_name                     = "PhoneNumberHistory"
+  enable_point_in_time_recovery  = var.enable_dynamodb_backup
+  enable_encryption              = true
+}
+
+module "dynamodb_otp_codes" {
+  source = "../../modules/dynamodb"
+
+  environment                    = var.environment
+  project_name                   = var.project_name
+  table_name                     = "OTPCodes"
+  enable_point_in_time_recovery  = var.enable_dynamodb_backup
+  enable_encryption              = true
+}
+
 # ========================================
 # SQS
 # ========================================
@@ -63,6 +93,28 @@ module "sqs" {
       visibility_timeout_seconds = 300
       message_retention_seconds  = 86400
       max_receive_count         = 3
+    }
+    fraud_review = {
+      visibility_timeout_seconds = 300
+      message_retention_seconds  = 86400
+      max_receive_count         = 3
+    }
+  }
+}
+
+# ========================================
+# SNS
+# ========================================
+
+module "sns" {
+  source = "../../modules/sns"
+
+  environment  = var.environment
+  project_name = var.project_name
+
+  topics = {
+    otp_sms = {
+      display_name = "OTP SMS notifications"
     }
   }
 }
@@ -92,15 +144,18 @@ module "msk" {
   environment  = var.environment
   project_name = var.project_name
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnet_ids
+  vpc_id             = module.vpc.vpc_id
+  subnet_ids         = module.vpc.private_subnet_ids
+  security_group_ids = [module.vpc.msk_security_group_id]
 
-  topics = {
+  kafka_topics = {
     client_updates = {
-      partitions = var.msk_partitions
+      partitions         = var.msk_partitions
+      replication_factor = 2
     }
     fcc_responses = {
-      partitions = var.msk_partitions
+      partitions         = var.msk_partitions
+      replication_factor = 2
     }
   }
 }
@@ -114,10 +169,23 @@ module "iam" {
 
   environment        = var.environment
   project_name       = var.project_name
+  aws_account_id     = data.aws_caller_identity.current.account_id
+
+  # Main resources
   dynamodb_table_arn = module.dynamodb.table_arn
   sqs_queue_arn      = module.sqs.queue_arns["fcc_responses"]
   msk_cluster_arn    = module.msk.cluster_arn
-  secrets_arns       = module.secrets.secret_arns
+  secrets_arns       = values(module.secrets.secret_arns)
+
+  # Phone Update workflow resources
+  phone_history_table_arn = module.dynamodb_phone_history.table_arn
+  otp_codes_table_arn     = module.dynamodb_otp_codes.table_arn
+  fraud_review_queue_arn  = module.sqs.queue_arns["fraud_review"]
+  sns_topic_arn           = module.sns.topic_arns["otp_sms"]
+
+  # State machine ARN will be set after Step Functions module is created
+  # For now, we'll use an empty string since it's optional
+  phone_update_state_machine_arn = ""
 }
 
 # ========================================
@@ -129,56 +197,134 @@ module "lambda" {
 
   environment  = var.environment
   project_name = var.project_name
-  aws_region   = var.aws_region
 
   lambda_execution_role_arn = module.iam.lambda_execution_role_arn
 
-  # Configuration Lambda
-  memory_size = var.lambda_memory_size
-  timeout     = var.lambda_timeout
+  # Lambda code bucket
+  lambda_code_bucket = data.terraform_remote_state.bootstrap.outputs.lambda_artifacts_bucket_name
+  code_version       = var.code_version
 
-  # VPC configuration for MSK access
-  vpc_subnet_ids         = module.vpc.private_subnet_ids
-  vpc_security_group_ids = [module.vpc.lambda_security_group_id]
+  # DynamoDB table names
+  dynamodb_client_table_name       = module.dynamodb.table_name
+  dynamodb_phone_history_table_name = module.dynamodb_phone_history.table_name
+  dynamodb_otp_table_name          = module.dynamodb_otp_codes.table_name
 
-  # Environment variables
-  dynamodb_table_name = module.dynamodb.table_name
-  sqs_queue_url       = module.sqs.queue_urls["fcc_responses"]
-  msk_bootstrap_servers = module.msk.bootstrap_servers
+  # SQS queue URLs
+  sqs_fraud_review_queue_url = module.sqs.queue_urls["fraud_review"]
 
-  # Secrets
-  ibmmq_secret_arn = module.secrets.secret_arns["ibmmq"]
-  mdmae_secret_arn = module.secrets.secret_arns["mdmae"]
+  # API endpoints
+  mdmae_api_endpoint = var.mdmae_url
+  fcc_api_endpoint   = "https://fcc-api-dev.example.com"  # TODO: Update with real endpoint
+  crm_api_endpoint   = "https://crm-api-dev.example.com"  # TODO: Update with real endpoint
+
+  # SNS topic ARN
+  sns_topic_arn = module.sns.topic_arns["otp_sms"]
+
+  # API Gateway execution ARN (to be set after API Gateway is created)
+  api_gateway_execution_arn = "${module.api_gateway.api_arn}/*"
+
+  # Step Functions ARN (to be set after Step Functions is created)
+  step_functions_phone_update_arn = module.step_functions.state_machine_arns["client_name_update"]
 
   # Lambda functions to create
   functions = {
     client_profile_reader = {
       handler     = "com.bnc.mcp.orchestration.handlers.ClientProfileReader::handleRequest"
-      description = "Read client profile from DynamoDB"
+      runtime     = "java17"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        DYNAMODB_TABLE = module.dynamodb.table_name
+        LOG_LEVEL      = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
     }
     name_validator = {
       handler     = "com.bnc.mcp.orchestration.handlers.NameValidator::handleRequest"
-      description = "Validate new client name"
+      runtime     = "java17"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        LOG_LEVEL = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
     }
     mdmae_client = {
       handler     = "com.bnc.mcp.orchestration.handlers.MdmaeClient::handleRequest"
-      description = "Call MDMAE service for duplicate detection"
+      runtime     = "java17"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        MDMAE_API_ENDPOINT = var.mdmae_url
+        LOG_LEVEL          = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
     }
     fcc_sender = {
       handler     = "com.bnc.mcp.orchestration.handlers.FccSender::handleRequest"
-      description = "Send update request to FCC via IBM MQ"
+      runtime     = "java17"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        IBM_MQ_SECRET_ARN = module.secrets.secret_arns["ibmmq"]
+        LOG_LEVEL         = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
     }
     human_review_handler = {
       handler     = "com.bnc.mcp.orchestration.handlers.HumanReviewHandler::handleRequest"
-      description = "Handle human review workflow"
+      runtime     = "java17"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        FRAUD_REVIEW_QUEUE_URL = module.sqs.queue_urls["fraud_review"]
+        LOG_LEVEL              = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
     }
     mq_poller = {
       handler     = "com.bnc.mcp.fcc.connector.MqPoller::handleRequest"
-      description = "Poll IBM MQ for FCC responses"
+      runtime     = "java17"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        IBM_MQ_SECRET_ARN = module.secrets.secret_arns["ibmmq"]
+        SQS_QUEUE_URL     = module.sqs.queue_urls["fcc_responses"]
+        LOG_LEVEL         = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
     }
     fcc_response_processor = {
       handler     = "com.bnc.mcp.fcc.connector.FccResponseProcessor::handleRequest"
-      description = "Process FCC responses from SQS"
+      runtime     = "java17"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        DYNAMODB_TABLE = module.dynamodb.table_name
+        LOG_LEVEL      = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
     }
   }
 }
@@ -197,7 +343,7 @@ module "eventbridge" {
     mq_poller = {
       description         = "Poll IBM MQ every 10 seconds"
       schedule_expression = "rate(10 seconds)"
-      lambda_function_arn = module.lambda.function_arns["mq_poller"]
+      target_lambda_arn   = module.lambda.function_arns["mq_poller"]
     }
   }
 
@@ -214,13 +360,10 @@ module "step_functions" {
   environment  = var.environment
   project_name = var.project_name
 
-  stepfunctions_role_arn = module.iam.stepfunctions_execution_role_arn
-  dynamodb_table_name    = module.dynamodb.table_name
-
   state_machines = {
     client_name_update = {
       definition_template = "client-name-update.json.tpl"
-      description         = "Client name update workflow"
+      role_arn           = module.iam.stepfunctions_execution_role_arn
 
       # Variables pour le template
       template_vars = {
@@ -246,8 +389,8 @@ module "api_gateway" {
   environment  = var.environment
   project_name = var.project_name
 
-  # Lambda API handler (will be created separately as Node.js function)
-  api_lambda_function_arn = module.lambda.function_arns["client_profile_reader"] # Temporary placeholder
+  # CloudWatch logging
+  cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
 
   # Throttling
   throttle_rate_limit  = var.api_throttle_rate_limit
@@ -255,6 +398,11 @@ module "api_gateway" {
 
   # Step Functions
   state_machine_arn = module.step_functions.state_machine_arns["client_name_update"]
+
+  # Phone Update workflow Lambda functions (optional - leave empty for now)
+  phone_update_controller_invoke_arn = ""
+  phone_update_controller_arn        = ""
+  phone_update_status_checker_arn    = ""
 }
 
 # ========================================
@@ -267,24 +415,14 @@ module "cloudwatch" {
   environment  = var.environment
   project_name = var.project_name
 
-  # Logs retention
-  log_retention_days = var.cloudwatch_retention_days
+  # Lambda log groups (as map)
+  lambda_function_names = module.lambda.function_arns
 
-  # Lambda log groups
-  lambda_function_names = keys(module.lambda.function_arns)
+  # Step Functions monitoring
+  state_machine_arns = module.step_functions.state_machine_arns
 
-  # Alarms
-  enable_alarms = var.enable_cloudwatch_alarms
-
-  alarm_config = {
-    lambda_error_threshold = 5
-    lambda_duration_threshold = 30000
-    dynamodb_error_threshold = 10
-    stepfunctions_failure_threshold = 3
-  }
-
-  # Resources to monitor
-  dynamodb_table_name    = module.dynamodb.table_name
-  state_machine_arns     = values(module.step_functions.state_machine_arns)
-  lambda_function_arns   = values(module.lambda.function_arns)
+  # Alarms configuration
+  enable_alarms          = var.enable_cloudwatch_alarms
+  error_threshold        = 5
+  duration_threshold_ms  = 30000
 }

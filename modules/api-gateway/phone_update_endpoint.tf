@@ -57,6 +57,8 @@ resource "aws_api_gateway_model" "phone_update_request" {
 
 # Integration with Lambda Controller (not Step Functions directly)
 resource "aws_api_gateway_integration" "phone_lambda" {
+  count = var.phone_update_controller_invoke_arn != "" ? 1 : 0
+
   rest_api_id = aws_api_gateway_rest_api.main.id
   resource_id = aws_api_gateway_resource.phone.id
   http_method = aws_api_gateway_method.put_phone.http_method
@@ -164,6 +166,8 @@ resource "aws_api_gateway_integration_response" "options_phone" {
 
 # Update deployment to include phone endpoint
 resource "aws_api_gateway_deployment" "phone_update" {
+  count = var.phone_update_controller_invoke_arn != "" ? 1 : 0
+
   rest_api_id = aws_api_gateway_rest_api.main.id
 
   depends_on = [
@@ -179,7 +183,7 @@ resource "aws_api_gateway_deployment" "phone_update" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.phone.id,
       aws_api_gateway_method.put_phone.id,
-      aws_api_gateway_integration.phone_lambda.id,
+      aws_api_gateway_integration.phone_lambda[0].id,
       aws_api_gateway_method.options_phone.id,
     ]))
   }

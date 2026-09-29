@@ -60,7 +60,7 @@ output "next_steps" {
        uses: aws-actions/configure-aws-credentials@v4
        with:
          role-to-assume: ${aws_iam_role.github_actions.arn}
-         role-session-name: GitHubActions-${{ github.run_id }}
+         role-session-name: GitHubActions-Terraform
          aws-region: ca-central-1
 
   3. Mettre à jour le github_repo dans bootstrap/terraform.tfvars

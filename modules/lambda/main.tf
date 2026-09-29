@@ -4,9 +4,10 @@ resource "aws_lambda_function" "functions" {
   function_name = "${var.environment}-${var.project_name}-${each.key}"
   role          = var.lambda_execution_role_arn
 
-  # Deployment package
-  filename         = "${path.module}/functions/${each.key}/function.jar"
-  source_code_hash = fileexists("${path.module}/functions/${each.key}/function.jar") ? filebase64sha256("${path.module}/functions/${each.key}/function.jar") : null
+  # Deployment package from S3
+  s3_bucket        = var.lambda_code_bucket
+  s3_key           = "${each.key}.jar"
+  source_code_hash = base64sha256("${each.key}-${var.code_version}")
 
   # Runtime configuration
   handler     = each.value.handler

@@ -1,7 +1,7 @@
 # SQS Queue for Fraud Review (Human Approval)
 resource "aws_sqs_queue" "fraud_review_queue" {
   name                       = "${var.environment}-fraud-review-queue"
-  visibility_timeout_seconds = 86400  # 24 hours (Step Functions timeout)
+  visibility_timeout_seconds = 43200  # 12 hours (max allowed by SQS)
   message_retention_seconds  = 1209600  # 14 days
   delay_seconds              = 0
   max_message_size           = 262144  # 256 KB

@@ -171,46 +171,8 @@ resource "aws_api_gateway_documentation_version" "phone_update" {
   ]
 }
 
-# Export de la spec OpenAPI depuis API Gateway (alternatif)
-resource "aws_api_gateway_stage" "main" {
-  deployment_id        = aws_api_gateway_deployment.main.id
-  rest_api_id          = aws_api_gateway_rest_api.main.id
-  stage_name           = var.environment
-  description          = "${var.environment} stage with OpenAPI documentation"
-
-  # Activer les logs CloudWatch
-  access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.api_gateway_logs.arn
-    format = jsonencode({
-      requestId      = "$context.requestId"
-      ip             = "$context.identity.sourceIp"
-      caller         = "$context.identity.caller"
-      user           = "$context.identity.user"
-      requestTime    = "$context.requestTime"
-      httpMethod     = "$context.httpMethod"
-      resourcePath   = "$context.resourcePath"
-      status         = "$context.status"
-      protocol       = "$context.protocol"
-      responseLength = "$context.responseLength"
-    })
-  }
-
-  tags = {
-    Name        = "${var.environment}-api-stage"
-    Environment = var.environment
-  }
-}
-
-# Log group pour API Gateway
-resource "aws_cloudwatch_log_group" "api_gateway_logs" {
-  name              = "/aws/apigateway/${var.environment}-mcp-api"
-  retention_in_days = 7
-
-  tags = {
-    Name        = "${var.environment}-api-gateway-logs"
-    Environment = var.environment
-  }
-}
+# Note: aws_api_gateway_stage "main" is defined in main.tf
+# Note: aws_cloudwatch_log_group for API Gateway is defined in main.tf as "api_gateway"
 
 # ========================================
 # Outputs

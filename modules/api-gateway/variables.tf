@@ -17,6 +17,7 @@ variable "state_machine_arn" {
 variable "cloudwatch_role_arn" {
   description = "ARN of IAM role for API Gateway CloudWatch logging"
   type        = string
+  default     = ""
 }
 
 variable "throttle_burst_limit" {
@@ -37,20 +38,23 @@ variable "log_retention_days" {
   default     = 7
 }
 
-# Phone Update Workflow variables
+# Phone Update Workflow variables (optional)
 variable "phone_update_controller_invoke_arn" {
   description = "Invoke ARN of the phone update controller Lambda function"
   type        = string
+  default     = ""
 }
 
 variable "phone_update_controller_arn" {
   description = "ARN of the phone update controller Lambda function (for OpenAPI spec)"
   type        = string
+  default     = ""
 }
 
 variable "phone_update_status_checker_arn" {
   description = "ARN of the phone update status checker Lambda function (for OpenAPI spec)"
   type        = string
+  default     = ""
 }
 
 # Swagger/OpenAPI Documentation variables

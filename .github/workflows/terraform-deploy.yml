@@ -62,11 +62,11 @@ jobs:
         id: plan
         run: |
           terraform plan \
-            -var="ibm_mq_host=${{ secrets[format('{0}_IBM_MQ_HOST', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="ibm_mq_port=${{ secrets[format('{0}_IBM_MQ_PORT', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="ibm_mq_channel=${{ secrets[format('{0}_IBM_MQ_CHANNEL', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="ibm_mq_password=${{ secrets[format('{0}_IBM_MQ_PASSWORD', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="mdmae_url=${{ secrets[format('{0}_MDMAE_URL', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
+            -var="ibm_mq_host=${{ secrets.IBM_MQ_HOST }}" \
+            -var="ibm_mq_port=${{ secrets.IBM_MQ_PORT }}" \
+            -var="ibm_mq_channel=${{ secrets.IBM_MQ_CHANNEL }}" \
+            -var="ibm_mq_password=${{ secrets.IBM_MQ_PASSWORD }}" \
+            -var="mdmae_url=${{ secrets.MDMAE_URL }}" \
             -out=tfplan
         continue-on-error: true
 
@@ -85,11 +85,11 @@ jobs:
         if: github.event.inputs.action == 'destroy'
         run: |
           terraform destroy -auto-approve \
-            -var="ibm_mq_host=${{ secrets[format('{0}_IBM_MQ_HOST', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="ibm_mq_port=${{ secrets[format('{0}_IBM_MQ_PORT', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="ibm_mq_channel=${{ secrets[format('{0}_IBM_MQ_CHANNEL', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="ibm_mq_password=${{ secrets[format('{0}_IBM_MQ_PASSWORD', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}" \
-            -var="mdmae_url=${{ secrets[format('{0}_MDMAE_URL', github.event.inputs.environment == 'dev' && 'DEV' || 'PROD')] }}"
+            -var="ibm_mq_host=${{ secrets.IBM_MQ_HOST }}" \
+            -var="ibm_mq_port=${{ secrets.IBM_MQ_PORT }}" \
+            -var="ibm_mq_channel=${{ secrets.IBM_MQ_CHANNEL }}" \
+            -var="ibm_mq_password=${{ secrets.IBM_MQ_PASSWORD }}" \
+            -var="mdmae_url=${{ secrets.MDMAE_URL }}"
 
       - name: Terraform Output
         if: github.event.inputs.action == 'apply'

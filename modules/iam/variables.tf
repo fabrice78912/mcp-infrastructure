@@ -31,33 +31,39 @@ variable "secrets_arns" {
   default     = []
 }
 
-# Phone Update Workflow variables
+# Phone Update Workflow variables (optional)
 variable "phone_history_table_arn" {
   description = "ARN of Phone Number History table"
   type        = string
+  default     = ""
 }
 
 variable "otp_codes_table_arn" {
   description = "ARN of OTP Codes table"
   type        = string
+  default     = ""
 }
 
 variable "fraud_review_queue_arn" {
   description = "ARN of Fraud Review SQS queue"
   type        = string
+  default     = ""
 }
 
 variable "sns_topic_arn" {
   description = "ARN of SNS topic for OTP SMS"
   type        = string
+  default     = ""
 }
 
 variable "phone_update_state_machine_arn" {
   description = "ARN of Phone Update Step Functions state machine"
   type        = string
+  default     = ""
 }
 
 variable "aws_account_id" {
   description = "AWS Account ID"
   type        = string
+  default     = ""
 }
