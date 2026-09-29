@@ -232,9 +232,8 @@ module "lambda" {
       timeout     = var.lambda_timeout
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
-        SPRING_CLOUD_FUNCTION_DEFINITION = "validationHandler"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "validationFunction"
         DYNAMODB_TABLE                   = module.dynamodb.table_name
-        AWS_REGION                       = var.aws_region
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
@@ -249,10 +248,9 @@ module "lambda" {
       timeout     = var.lambda_timeout
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
-        SPRING_CLOUD_FUNCTION_DEFINITION = "matchingHandler"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "matchingFunction"
         MDMAE_API_ENDPOINT               = var.mdmae_url
         DYNAMODB_TABLE                   = module.dynamodb.table_name
-        AWS_REGION                       = var.aws_region
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
@@ -267,10 +265,9 @@ module "lambda" {
       timeout     = var.lambda_timeout
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
-        SPRING_CLOUD_FUNCTION_DEFINITION = "updateProfileHandler"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "updateProfileFunction"
         MDMAE_API_ENDPOINT               = var.mdmae_url
         DYNAMODB_TABLE                   = module.dynamodb.table_name
-        AWS_REGION                       = var.aws_region
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
@@ -285,10 +282,9 @@ module "lambda" {
       timeout     = var.lambda_timeout
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
-        SPRING_CLOUD_FUNCTION_DEFINITION = "publishEventHandler"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "publishEventFunction"
         IBM_MQ_SECRET_ARN                = module.secrets.secret_arns["ibmmq"]
         DYNAMODB_TABLE                   = module.dynamodb.table_name
-        AWS_REGION                       = var.aws_region
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
@@ -303,10 +299,9 @@ module "lambda" {
       timeout     = var.lambda_timeout
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
-        SPRING_CLOUD_FUNCTION_DEFINITION = "humanReviewHandler"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "humanReviewFunction"
         FRAUD_REVIEW_QUEUE_URL           = module.sqs.queue_urls["fraud_review"]
         DYNAMODB_TABLE                   = module.dynamodb.table_name
-        AWS_REGION                       = var.aws_region
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
