@@ -140,6 +140,12 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
+# Attacher la policy AWS Lambda MSK Execution (pour Event Source Mapping)
+resource "aws_iam_role_policy_attachment" "lambda_msk_execution" {
+  role       = aws_iam_role.lambda_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaMSKExecutionRole"
+}
+
 # ========================================
 # Step Functions Execution Role
 # ========================================
