@@ -22,6 +22,5 @@ resource "aws_msk_serverless_cluster" "main" {
   }
 }
 
-# Note: Kafka topics are typically created by applications or Kafka admin tools
-# This is a placeholder for documentation purposes
-# In production, use terraform-provider-kafka or kafka-topics.sh to create topics
+# Note: Topics are created automatically by Spring Boot application
+# using @Bean NewTopic configuration with IAM authentication
