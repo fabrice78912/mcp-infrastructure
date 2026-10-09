@@ -106,7 +106,10 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           "ec2:DescribeNetworkInterfaces",
           "ec2:DeleteNetworkInterface",
           "ec2:AssignPrivateIpAddresses",
-          "ec2:UnassignPrivateIpAddresses"
+          "ec2:UnassignPrivateIpAddresses",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs"
         ]
         Resource = "*"
       }
