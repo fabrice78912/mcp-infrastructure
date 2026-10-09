@@ -339,6 +339,21 @@ module "lambda" {
         security_group_ids = [module.vpc.lambda_security_group_id]
       }
     }
+    kafka_consumer = {
+      handler     = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
+      runtime     = "java21"
+      memory_size = var.lambda_memory_size
+      timeout     = var.lambda_timeout
+      environment_vars = {
+        SPRING_PROFILES_ACTIVE           = "lambda"
+        SPRING_CLOUD_FUNCTION_DEFINITION = "kafkaConsumerFunction"
+        LOG_LEVEL                        = "INFO"
+      }
+      vpc_config = {
+        subnet_ids         = module.vpc.private_subnet_ids
+        security_group_ids = [module.vpc.lambda_security_group_id]
+      }
+    }
   }
 }
 
@@ -441,4 +456,27 @@ module "cloudwatch" {
   enable_alarms          = var.enable_cloudwatch_alarms
   error_threshold        = 5
   duration_threshold_ms  = 30000
+}
+
+# ========================================
+# MSK Event Source Mapping (Kafka Consumer)
+# ========================================
+
+resource "aws_lambda_event_source_mapping" "kafka_consumer" {
+  event_source_arn  = module.msk.cluster_arn
+  function_name     = module.lambda.function_arns["kafka_consumer"]
+  topics            = ["client.name.updated"]
+  starting_position = "LATEST"
+
+  # Batch configuration
+  batch_size                         = 100
+  maximum_batching_window_in_seconds = 10
+
+  # Note: Pour Amazon MSK Serverless, AWS gère automatiquement la connectivité VPC
+  # La Lambda doit être dans le même VPC que MSK (déjà configuré via vpc_config dans la Lambda)
+
+  depends_on = [
+    module.lambda,
+    module.msk
+  ]
 }

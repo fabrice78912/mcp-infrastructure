@@ -77,6 +77,15 @@ resource "aws_iam_role_policy" "lambda_permissions" {
       {
         Effect = "Allow"
         Action = [
+          "kafka:DescribeClusterV2",
+          "kafka:DescribeCluster",
+          "kafka:GetBootstrapBrokers"
+        ]
+        Resource = var.msk_cluster_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "secretsmanager:GetSecretValue"
         ]
         Resource = length(var.secrets_arns) > 0 ? var.secrets_arns : ["*"]

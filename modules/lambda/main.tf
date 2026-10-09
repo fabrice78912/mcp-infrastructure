@@ -5,9 +5,10 @@ resource "aws_lambda_function" "functions" {
   role          = var.lambda_execution_role_arn
 
   # Deployment package from S3
+  # Java21 functions (Spring Boot) share the same JAR, Java17 functions have their own JARs
   s3_bucket        = var.lambda_code_bucket
-  s3_key           = "${each.key}.jar"
-  source_code_hash = base64sha256("${each.key}-${var.code_version}")
+  s3_key           = each.value.runtime == "java21" ? "orchestration/mcp-orchestration-${var.code_version}-aws.jar" : "${each.key}.jar"
+  source_code_hash = each.value.runtime == "java21" ? base64sha256("orchestration-${var.code_version}") : base64sha256("${each.key}-${var.code_version}")
 
   # Runtime configuration
   handler     = each.value.handler
