@@ -289,7 +289,7 @@ module "lambda" {
         SPRING_PROFILES_ACTIVE           = "lambda"
         SPRING_CLOUD_FUNCTION_DEFINITION = "publishEventFunction"
         MCP_KAFKA_BOOTSTRAP              = module.msk.bootstrap_brokers
-        KAFKA_TOPIC                      = "client.name.updated"
+        MCP_KAFKA_TOPIC                  = "client.name.updated"
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
