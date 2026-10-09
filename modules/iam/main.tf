@@ -78,7 +78,9 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           "kafka-cluster:DescribeTopic",
           "kafka-cluster:WriteData",
           "kafka-cluster:ReadData",
-          "kafka-cluster:AlterTopic"
+          "kafka-cluster:AlterTopic",
+          "kafka-cluster:DescribeGroup",
+          "kafka-cluster:AlterGroup"
         ]
         Resource = [
           "arn:aws:kafka:*:${var.aws_account_id}:topic/${var.environment}-${var.project_name}-msk/*/*",
