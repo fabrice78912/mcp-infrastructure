@@ -5,6 +5,7 @@
     "ReadClientProfile": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
+      "TimeoutSeconds": 300,
       "Parameters": {
         "FunctionName": "${client_profile_reader_arn}",
         "Payload": {
@@ -30,6 +31,7 @@
     "ValidateNameChange": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
+      "TimeoutSeconds": 300,
       "Parameters": {
         "FunctionName": "${name_validator_arn}",
         "Payload": {
@@ -72,6 +74,7 @@
     "CallMDMAE": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
+      "TimeoutSeconds": 300,
       "Parameters": {
         "FunctionName": "${mdmae_client_arn}",
         "Payload": {
@@ -116,6 +119,7 @@
     "SendToFCC": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
+      "TimeoutSeconds": 300,
       "Parameters": {
         "FunctionName": "${fcc_sender_arn}",
         "Payload": {
@@ -185,6 +189,7 @@
     "HumanReviewRequired": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
+      "TimeoutSeconds": 300,
       "Parameters": {
         "FunctionName": "${human_review_handler_arn}",
         "Payload": {
