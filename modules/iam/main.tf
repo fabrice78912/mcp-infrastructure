@@ -67,12 +67,23 @@ resource "aws_iam_role_policy" "lambda_permissions" {
       {
         Effect = "Allow"
         Action = [
-          "kafka-cluster:Connect",
-          "kafka-cluster:DescribeTopic",
-          "kafka-cluster:WriteData",
-          "kafka-cluster:ReadData"
+          "kafka-cluster:Connect"
         ]
         Resource = var.msk_cluster_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:CreateTopic",
+          "kafka-cluster:DescribeTopic",
+          "kafka-cluster:WriteData",
+          "kafka-cluster:ReadData",
+          "kafka-cluster:AlterTopic"
+        ]
+        Resource = [
+          "arn:aws:kafka:*:${var.aws_account_id}:topic/${var.environment}-${var.project_name}-msk/*",
+          "arn:aws:kafka:*:${var.aws_account_id}:group/${var.environment}-${var.project_name}-msk/*"
+        ]
       },
       {
         Effect = "Allow"
