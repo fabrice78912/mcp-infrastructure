@@ -157,6 +157,10 @@ module "msk" {
       partitions         = var.msk_partitions
       replication_factor = 2
     }
+    "client.name.updated" = {
+      partitions         = var.msk_partitions
+      replication_factor = 2
+    }
   }
 }
 
