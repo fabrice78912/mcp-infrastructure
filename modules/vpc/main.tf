@@ -146,6 +146,63 @@ resource "aws_vpc_endpoint" "stepfunctions" {
   }
 }
 
+# VPC Endpoint for Lambda (required for MSK Event Source Mapping)
+resource "aws_vpc_endpoint" "lambda" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.lambda"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.0.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name        = "${var.environment}-${var.project_name}-lambda-endpoint"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+  }
+}
+
+# VPC Endpoint for STS (required for MSK Event Source Mapping)
+resource "aws_vpc_endpoint" "sts" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.sts"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.0.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name        = "${var.environment}-${var.project_name}-sts-endpoint"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+  }
+}
+
+# VPC Endpoint for Secrets Manager (required for MSK Event Source Mapping)
+resource "aws_vpc_endpoint" "secretsmanager" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.0.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name        = "${var.environment}-${var.project_name}-secretsmanager-endpoint"
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "Terraform"
+  }
+}
+
 # Security group for VPC endpoints (interface type)
 resource "aws_security_group" "vpc_endpoints" {
   count = var.enable_vpc_endpoints ? 1 : 0
