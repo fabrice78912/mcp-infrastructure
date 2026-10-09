@@ -81,8 +81,8 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           "kafka-cluster:AlterTopic"
         ]
         Resource = [
-          "arn:aws:kafka:*:${var.aws_account_id}:topic/${var.environment}-${var.project_name}-msk/*",
-          "arn:aws:kafka:*:${var.aws_account_id}:group/${var.environment}-${var.project_name}-msk/*"
+          "arn:aws:kafka:*:${var.aws_account_id}:topic/${var.environment}-${var.project_name}-msk/*/*",
+          "arn:aws:kafka:*:${var.aws_account_id}:group/${var.environment}-${var.project_name}-msk/*/*"
         ]
       },
       {
