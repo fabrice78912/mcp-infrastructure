@@ -253,7 +253,6 @@ module "lambda" {
         SPRING_PROFILES_ACTIVE           = "lambda"
         SPRING_CLOUD_FUNCTION_DEFINITION = "matchingFunction"
         MDMAE_API_ENDPOINT               = var.mdmae_url
-        DYNAMODB_TABLE                   = module.dynamodb.table_name
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
@@ -269,7 +268,6 @@ module "lambda" {
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
         SPRING_CLOUD_FUNCTION_DEFINITION = "updateProfileFunction"
-        MDMAE_API_ENDPOINT               = var.mdmae_url
         DYNAMODB_TABLE                   = module.dynamodb.table_name
         LOG_LEVEL                        = "INFO"
       }
@@ -286,8 +284,6 @@ module "lambda" {
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
         SPRING_CLOUD_FUNCTION_DEFINITION = "publishEventFunction"
-        IBM_MQ_SECRET_ARN                = module.secrets.secret_arns["ibmmq"]
-        DYNAMODB_TABLE                   = module.dynamodb.table_name
         LOG_LEVEL                        = "INFO"
       }
       vpc_config = {
@@ -303,7 +299,7 @@ module "lambda" {
       environment_vars = {
         SPRING_PROFILES_ACTIVE           = "lambda"
         SPRING_CLOUD_FUNCTION_DEFINITION = "humanReviewFunction"
-        FRAUD_REVIEW_QUEUE_URL           = module.sqs.queue_urls["fraud_review"]
+        MCP_FRAUD_REVIEW_QUEUE_URL       = module.sqs.queue_urls["fraud_review"]
         DYNAMODB_TABLE                   = module.dynamodb.table_name
         LOG_LEVEL                        = "INFO"
       }
