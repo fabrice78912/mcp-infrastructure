@@ -42,3 +42,6 @@ Thumbs.db
 # Build artifacts
 *.zip
 *.jar
+
+# Terraform state exports
+state-*.json
