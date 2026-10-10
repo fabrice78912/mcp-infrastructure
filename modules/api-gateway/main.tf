@@ -67,9 +67,10 @@ resource "aws_api_gateway_integration" "stepfunctions" {
 
   request_templates = {
     "application/json" = <<EOF
+#set($inputRoot = $input.path('$'))
 {
   "stateMachineArn": "${var.state_machine_arn}",
-  "input": "{\"clientId\": \"$util.escapeJavaScript($input.params('clientId'))\", \"newLastName\": \"$util.escapeJavaScript($input.path('$.newLastName'))\", \"reason\": \"$util.escapeJavaScript($input.path('$.reason'))\", \"requestId\": \"$context.requestId\"}"
+  "input": "{\"clientId\": \"$util.escapeJavaScript($input.params('clientId'))\", \"newLastName\": \"$util.escapeJavaScript($inputRoot.newLastName)\", \"reason\": \"$util.escapeJavaScript($inputRoot.reason)\", \"requestId\": \"$context.requestId\"}"
 }
 EOF
   }
