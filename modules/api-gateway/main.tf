@@ -105,7 +105,8 @@ resource "aws_api_gateway_integration_response" "stepfunctions" {
     "application/json" = <<EOF
 {
   "message": "Client name update initiated",
-  "executionArn": $input.json('$.executionArn')
+  "executionArn": $input.json('$.executionArn'),
+  "requestId": "$context.requestId"
 }
 EOF
   }
