@@ -69,7 +69,7 @@ resource "aws_api_gateway_integration" "stepfunctions" {
     "application/json" = <<EOF
 {
   "stateMachineArn": "${var.state_machine_arn}",
-  "input": "{\"clientId\": \"$util.escapeJavaScript($input.params('clientId'))\", \"newLastName\": \"$util.escapeJavaScript($input.path('$.newLastName'))\", \"reason\": \"$util.escapeJavaScript($input.path('$.reason'))\"}"
+  "input": "{\"clientId\": \"$util.escapeJavaScript($input.params('clientId'))\", \"newLastName\": \"$util.escapeJavaScript($input.path('$.newLastName'))\", \"reason\": \"$util.escapeJavaScript($input.path('$.reason'))\", \"requestId\": \"$context.requestId\"}"
 }
 EOF
   }
